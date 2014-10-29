@@ -108,25 +108,18 @@ int	bestSeamY_helper (Mat &M, Mat &energy, int i, int j) {
 	min2 = bestSeamY_helper(M, energy, i-1, j);
 
 	M.at<double>(i,j) = energy.at<double>(i,j) + minValue(min1, min2, min3);
-	cout<<"M("<<i<<", "<<j<<") "<<M.at<double>(i,j)<<endl;
+	// cout<<"M("<<i<<", "<<j<<") "<<M.at<double>(i,j)<<endl;
+	cout<<"energy "<<energy.at<double>(i,j)<<"; minValue "<<minValue(min1, min2, min3)<<endl;
 	return M.at<double>(i,j);
 }
 
 int minValue (int x1, int x2, int x3) {
-	if (x1 < x2) {
-		if (x1 < x3) {
-			return x1;
-		}
-		else {
-			return x3;
-		}
+	int minVal = x1;
+	if (minVal < x2) {
+		minVal = x2;
 	}
-	else {
-		if (x2 < x3) {
-			return x2;
-		}
-		else {
-			return x3;
-		}
+	if (minVal < x3) {
+		minVal = x3;
 	}
+	return minVal;
 }
