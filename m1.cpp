@@ -16,10 +16,10 @@
 using namespace cv;
 using namespace std;
 
-#define IMAX std::numeric_limits<double>::max()
+#define IMAX 2147483641
 
 struct pixel {
-	unsigned short x; unsigned short y;
+	int x; int y;
 };
 
 struct seam {
@@ -63,9 +63,9 @@ int main (int argc, char **argv) {
 	// imshow("Energy", energy);
 	// waitKey(0);
 	// destroyWindow("Energy");
-	// Mat dummy = (Mat_<double>(5, 5) << 5.5, 16, 22.5, 13, 16, 6.5, 8, 11.5, 20, 6.5, 2.5, 9.5, 7, 7.5, 4, 5.5, 3.5, 5.5, 10, 4.5, 6.5, 3.5, 9.5, 9, 5.5);
-	struct seam SX = bestSeamY(energy);
-	struct seam SY = bestSeamX(energy);
+	Mat dummy = (Mat_<double>(5, 5) << 5.5, 16, 22.5, 13, 16, 6.5, 8, 11.5, 20, 6.5, 2.5, 9.5, 7, 7.5, 4, 5.5, 3.5, 5.5, 10, 4.5, 6.5, 3.5, 9.5, 9, 5.5);
+	struct seam SX = bestSeamY(dummy);
+	struct seam SY = bestSeamX(dummy);
 	return 0;
 }
 
@@ -81,19 +81,27 @@ seam bestSeamY (Mat energy) {
 			index = i;
 		}
 	}
-	// cout<<"\nMin "<<minimum<<"; minIndex "<<index<<endl;
-	struct seam S;	short unsigned colIndex = minimum;
-	struct pixel p = {(short)(energy.rows-1), (short)colIndex};
+
+	cout<<energy<<endl;
+	cout<<M<<endl;
+	cout<<J;
+	cout<<"\nMin "<<minimum<<"; minIndex "<<index<<endl;
+	struct seam S;
+	int colIndex = index;
+	// cout<<"Col Index "<<colIndex<<endl;
+	struct pixel p = {(energy.rows-1), colIndex};
 	S.pixels.push_back(p);	S.totalEnergy = energy.at<double>(energy.rows-1, colIndex);
 	for (int i=energy.rows-1; i>0; i--) {
 		int prev = colIndex;
-		colIndex += (short)J.at<double>(i, prev);
-		struct pixel p = {(short)(i-1), (short)colIndex};
-		S.pixels.push_back(p);	S.totalEnergy += energy.at<double>(i-1, colIndex);
+		colIndex += (int)J.at<double>(i, prev);
+		// cout<<"J "<<(int)J.at<double>(i, prev)<<endl;
+		struct pixel p = {(int)(i-1), (int)colIndex};
+		S.pixels.push_back(p);
+		S.totalEnergy += energy.at<double>(i-1, colIndex);
 	}
-	// for (int i=0; i<energy.cols; i++) {
-	// 	cout<<"x "<<S.pixels[i].x<<"; y "<<S.pixels[i].y<<endl;
-	// }
+	for (int i=0; i<energy.cols; i++) {
+		cout<<"x "<<S.pixels[i].x<<"; y "<<S.pixels[i].y<<endl;
+	}
 	return S;
 }
 
@@ -158,12 +166,13 @@ int	bestSeamX_helper (Mat &M, Mat &J, Mat &energy, int i, int j) {
 
 int minNeighbor (int x1, int x2, int x3, int i, int j, Mat &J) {
 	int minVal = x1, 	pos = -1;
-	if (minVal < x2) {
+	if (x2 < minVal) {
 		minVal = x2;	pos = 0;
 	}
-	if (minVal < x3) {
+	if (x3 < minVal) {
 		minVal = x3;	pos = 1;
 	}
+	// cout<<x1<<" "<<x2<<" "<<x3<<" "<<minVal<<endl;
 	J.at<double>(i,j) = pos;
 	return minVal;
 }
