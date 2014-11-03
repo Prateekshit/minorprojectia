@@ -57,7 +57,12 @@ int main (int argc, char **argv) {
 	
 	// // struct seam SX = bestSeamX(energy);
 	Mat newImg, newColImg, planes[3], newPlanes[3];
-	for (int i=0; i<50; i++) {
+	cout << "starting processing" << endl;
+	newPlanes[0] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
+	newPlanes[1] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
+	newPlanes[2] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
+	for (int i=0; i<5; i++) {
+		cout << ".";
 		GaussianBlur(img, gaussImg, Size(3,3), 1);
 		Sobel(gaussImg, sobelx, CV_16S, 1, 0, 3, 1, 0, BORDER_DEFAULT);
 		convertScaleAbs(sobelx, sobelx);
@@ -66,44 +71,47 @@ int main (int argc, char **argv) {
 		addWeighted(sobelx, 0.5, sobely, 0.5, 0, energy);
 		energy.convertTo(energy, CV_64FC1);
 		struct seam SY = bestSeamY(energy);
-		newImg = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
+		newImg = Mat(img, Range::all(), Range(0,img.cols-1));
 		removeSeamY(img, newImg, SY);
 		img = newImg;
 
 		split(colorImg, planes);
-		newPlanes[0] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
+		newPlanes[0] = Mat(newPlanes[0], Range::all(), Range(0, img.cols-1));
+		newPlanes[1] = Mat(newPlanes[1], Range::all(), Range(0, img.cols-1));
+		newPlanes[2] = Mat(newPlanes[2], Range::all(), Range(0, img.cols-1));
 		removeSeamY(planes[0], newPlanes[0], SY);
-		newPlanes[1] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
 		removeSeamY(planes[1], newPlanes[1], SY);
-		newPlanes[2] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
 		removeSeamY(planes[2], newPlanes[2], SY);
 		merge(newPlanes, 3, newColImg);
 		colorImg = newColImg;
 	}
+	cout << endl;
+	newPlanes[0] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
+	newPlanes[1] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
+	newPlanes[2] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
+	for (int i=0; i<5; i++) {
+		GaussianBlur(img, gaussImg, Size(3,3), 1);
+		Sobel(gaussImg, sobelx, CV_16S, 1, 0, 3, 1, 0, BORDER_DEFAULT);
+		convertScaleAbs(sobelx, sobelx);
+		Sobel(gaussImg, sobely, CV_16S, 0, 1, 3, 1, 0, BORDER_DEFAULT);
+		convertScaleAbs(sobely, sobely);
+		addWeighted(sobelx, 0.5, sobely, 0.5, 0, energy);
+		energy.convertTo(energy, CV_64FC1);
+		struct seam SX = bestSeamX(energy);
+		newImg = Mat(img, Range(0, img.rows-1), Range::all());
+		removeSeamX(img, newImg, SX);
+		img = newImg;
 
-	// for (int i=0; i<20; i++) {
-	// 	GaussianBlur(img, gaussImg, Size(3,3), 1);
-	// 	Sobel(gaussImg, sobelx, CV_16S, 1, 0, 3, 1, 0, BORDER_DEFAULT);
-	// 	convertScaleAbs(sobelx, sobelx);
-	// 	Sobel(gaussImg, sobely, CV_16S, 0, 1, 3, 1, 0, BORDER_DEFAULT);
-	// 	convertScaleAbs(sobely, sobely);
-	// 	addWeighted(sobelx, 0.5, sobely, 0.5, 0, energy);
-	// 	energy.convertTo(energy, CV_64FC1);
-	// 	struct seam SX = bestSeamX(energy);
-	// 	newImg = Mat::zeros(img.rows-1, img.cols, CV_8UC1);
-	// 	removeSeamX(img, newImg, SX);
-	// 	img = newImg;
-
-	// 	split(colorImg, planes);
-	// 	newPlanes[0] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
-	// 	removeSeamX(planes[0], newPlanes[0], SX);
-	// 	newPlanes[1] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
-	// 	removeSeamX(planes[1], newPlanes[1], SX);
-	// 	newPlanes[2] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
-	// 	removeSeamX(planes[2], newPlanes[2], SX);
-	// 	merge(planes, 3, newColImg);
-	// 	colorImg = newColImg;
-	// }
+		split(colorImg, planes);
+		newPlanes[0] = Mat(newPlanes[0], Range(0, img.rows-1), Range::all());
+		newPlanes[1] = Mat(newPlanes[1], Range(0, img.rows-1), Range::all());
+		newPlanes[2] = Mat(newPlanes[2], Range(0, img.rows-1), Range::all());
+		removeSeamX(planes[0], newPlanes[0], SX);
+		removeSeamX(planes[1], newPlanes[1], SX);
+		removeSeamX(planes[2], newPlanes[2], SX);
+		merge(planes, 3, newColImg);
+		colorImg = newColImg;
+	}
 	imshow("Lol", newColImg);
 	waitKey(0);
 	destroyAllWindows();
