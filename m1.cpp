@@ -32,7 +32,7 @@ int		bestSeamX_helper (Mat &M, Mat &J, Mat &energy, int i, int j);
 seam 	bestSeamY (Mat energy);
 int		bestSeamY_helper (Mat &M, Mat &J, Mat &energy, int i, int j);
 int 	minNeighbor (int x1, int x2, int x3, int i, int j, Mat &J);
-void 	removeSeamY (Mat &img, Mat &newImg, seam &s);
+void 	removeSeamY (Mat &img, seam &s);
 void 	removeSeamX (Mat &img, Mat &newImg, seam &s);
 Mat 	removeSeamYColor (Mat &img, seam &s);
 
@@ -50,19 +50,18 @@ int main (int argc, char **argv) {
 	imshow("Original Image", img);
 	colorImg = img;
 	cvtColor(img, img, CV_RGB2GRAY);
-	
+	cout << "original size:" << colorImg.size() << endl; 
 	resize(img, img, Size(img.rows*1.1, img.cols*1.1), 0, 0, INTER_CUBIC);
+	resize(colorImg, colorImg, Size(colorImg.rows*1.1, colorImg.cols*1.1), 0, 0, INTER_CUBIC);
 	
 	// // Mat dummy = (Mat_<double>(5, 5) << 5.5, 16, 22.5, 13, 16, 6.5, 8, 11.5, 20, 6.5, 2.5, 9.5, 7, 7.5, 4, 5.5, 3.5, 5.5, 10, 4.5, 6.5, 3.5, 9.5, 9, 5.5);
 	
 	// // struct seam SX = bestSeamX(energy);
 	Mat newImg, newColImg, planes[3], newPlanes[3];
 	cout << "starting processing" << endl;
-	newPlanes[0] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
-	newPlanes[1] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
-	newPlanes[2] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
-	for (int i=0; i<5; i++) {
-		cout << ".";
+	cout << "size before loop:" << colorImg.size() << endl; 
+	for (int i=0; i<10; i++) {
+		cout << "hello" << endl;
 		GaussianBlur(img, gaussImg, Size(3,3), 1);
 		Sobel(gaussImg, sobelx, CV_16S, 1, 0, 3, 1, 0, BORDER_DEFAULT);
 		convertScaleAbs(sobelx, sobelx);
@@ -71,48 +70,43 @@ int main (int argc, char **argv) {
 		addWeighted(sobelx, 0.5, sobely, 0.5, 0, energy);
 		energy.convertTo(energy, CV_64FC1);
 		struct seam SY = bestSeamY(energy);
-		newImg = Mat(img, Range::all(), Range(0,img.cols-1));
-		removeSeamY(img, newImg, SY);
-		img = newImg;
+		removeSeamY(img, SY);
+		img = Mat(img, Range::all(), Range(0,img.cols-1));
 
 		split(colorImg, planes);
-		newPlanes[0] = Mat(newPlanes[0], Range::all(), Range(0, img.cols-1));
-		newPlanes[1] = Mat(newPlanes[1], Range::all(), Range(0, img.cols-1));
-		newPlanes[2] = Mat(newPlanes[2], Range::all(), Range(0, img.cols-1));
-		removeSeamY(planes[0], newPlanes[0], SY);
-		removeSeamY(planes[1], newPlanes[1], SY);
-		removeSeamY(planes[2], newPlanes[2], SY);
-		merge(newPlanes, 3, newColImg);
-		colorImg = newColImg;
+		removeSeamY(planes[0], SY);
+		planes[0] = Mat(planes[0], Range::all(), Range(0, planes[0].cols-1));
+		removeSeamY(planes[1], SY);
+		planes[1] = Mat(planes[1], Range::all(), Range(0, planes[1].cols-1));
+		removeSeamY(planes[2], SY);
+		planes[2] = Mat(planes[2], Range::all(), Range(0, planes[2].cols-1));
+		merge(planes, 3, colorImg);
 	}
 	cout << endl;
-	newPlanes[0] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
-	newPlanes[1] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
-	newPlanes[2] = Mat::zeros(img.rows, img.cols-1, CV_8UC1);
-	for (int i=0; i<5; i++) {
-		GaussianBlur(img, gaussImg, Size(3,3), 1);
-		Sobel(gaussImg, sobelx, CV_16S, 1, 0, 3, 1, 0, BORDER_DEFAULT);
-		convertScaleAbs(sobelx, sobelx);
-		Sobel(gaussImg, sobely, CV_16S, 0, 1, 3, 1, 0, BORDER_DEFAULT);
-		convertScaleAbs(sobely, sobely);
-		addWeighted(sobelx, 0.5, sobely, 0.5, 0, energy);
-		energy.convertTo(energy, CV_64FC1);
-		struct seam SX = bestSeamX(energy);
-		newImg = Mat(img, Range(0, img.rows-1), Range::all());
-		removeSeamX(img, newImg, SX);
-		img = newImg;
+	// for (int i=0; i<50; i++) {
+	// 	GaussianBlur(img, gaussImg, Size(3,3), 1);
+	// 	Sobel(gaussImg, sobelx, CV_16S, 1, 0, 3, 1, 0, BORDER_DEFAULT);
+	// 	convertScaleAbs(sobelx, sobelx);
+	// 	Sobel(gaussImg, sobely, CV_16S, 0, 1, 3, 1, 0, BORDER_DEFAULT);
+	// 	convertScaleAbs(sobely, sobely);
+	// 	addWeighted(sobelx, 0.5, sobely, 0.5, 0, energy);
+	// 	energy.convertTo(energy, CV_64FC1);
+	// 	struct seam SX = bestSeamX(energy);
+	// 	newImg = Mat(img, Range(0, img.rows-1), Range::all());
+	// 	removeSeamX(img, newImg, SX);
+	// 	img = newImg;
 
-		split(colorImg, planes);
-		newPlanes[0] = Mat(newPlanes[0], Range(0, img.rows-1), Range::all());
-		newPlanes[1] = Mat(newPlanes[1], Range(0, img.rows-1), Range::all());
-		newPlanes[2] = Mat(newPlanes[2], Range(0, img.rows-1), Range::all());
-		removeSeamX(planes[0], newPlanes[0], SX);
-		removeSeamX(planes[1], newPlanes[1], SX);
-		removeSeamX(planes[2], newPlanes[2], SX);
-		merge(planes, 3, newColImg);
-		colorImg = newColImg;
-	}
-	imshow("Lol", newColImg);
+	// 	split(colorImg, planes);
+	// 	newPlanes[0] = Mat(newPlanes[0], Range(0, img.rows-1), Range::all());
+	// 	newPlanes[1] = Mat(newPlanes[1], Range(0, img.rows-1), Range::all());
+	// 	newPlanes[2] = Mat(newPlanes[2], Range(0, img.rows-1), Range::all());
+	// 	removeSeamX(planes[0], newPlanes[0], SX);
+	// 	removeSeamX(planes[1], newPlanes[1], SX);
+	// 	removeSeamX(planes[2], newPlanes[2], SX);
+	// 	merge(planes, 3, newColImg);
+	// 	colorImg = newColImg;
+	// }
+	imshow("Lol", colorImg);
 	waitKey(0);
 	destroyAllWindows();
 	return 0;
@@ -227,67 +221,29 @@ int minNeighbor (int x1, int x2, int x3, int i, int j, Mat &J) {
 	return minVal;
 }
 
-void removeSeamY (Mat &img, Mat &newImg, seam &s) {
+void removeSeamY (Mat &img, seam &s) {
 	
 	int initx, inity;
 	for (int i=0; i<s.pixels.size(); i++) {
 		initx = s.pixels[i].x;	inity = s.pixels[i].y;
 		for (int j=0; j<inity; j++) {
-			newImg.at<uchar>(initx, j) = img.at<uchar>(initx, j);
+			img.at<uchar>(initx, j) = img.at<uchar>(initx, j);
 		}
 		for (int j=inity+1; j<img.cols; j++) {
-			newImg.at<uchar>(initx, j-1) = img.at<uchar>(initx, j);
+			img.at<uchar>(initx, j-1) = img.at<uchar>(initx, j);
 		}
 	}
-}
-
-Mat removeSeamYColor (Mat &img, seam &s) {
-	Mat newImg = img.colRange(0, img.cols-2);
-	int initx, inity, temp=200;
-	for (int i=0; i<s.pixels.size(); i++) {
-		initx = s.pixels[i].x;	inity = s.pixels[i].y;
-		for (int j=inity+1; j<img.cols; j++) {
-			// temp = (int)img.at<Vec3b>(initx, j)[0];
-			// cout<<"Temp "<<temp<<endl;
-			newImg.at<Vec3b>(initx, j-1)[0] = (uchar)temp;
-			// temp = (int)img.at<Vec3b>(initx, j)[1];
-			// img.at<Vec3b>(initx, j-1)[1] = temp;
-			// temp = (int)img.at<Vec3b>(initx, j)[1];
-			// img. at<Vec3b>(initx, j-1)[1] = temp;
-		}
-		// cout<<"I "<<i<<endl;
-	}
-	// newImg = img.colRange(1, img.cols-1);
-	// cout<<"Hello!!!!"<<endl;
-	return newImg;
 }
 
 void removeSeamX (Mat &img, Mat &newImg, seam &s) {
 	int initx, inity;
-	if (img.channels() == 1) {
-		for (int i=0; i<s.pixels.size(); i++) {
-			initx = s.pixels[i].x;	inity = s.pixels[i].y;
-			for (int j=0; j<initx; j++) {
-				newImg.at<uchar>(j, inity) = img.at<uchar>(j, inity);
-			}
-			for (int j=initx+1; j<img.cols; j++) {
-				newImg.at<uchar>(j-1, inity) = img.at<uchar>(j, inity);
-			}
+	for (int i=0; i<s.pixels.size(); i++) {
+		initx = s.pixels[i].x;	inity = s.pixels[i].y;
+		for (int j=0; j<initx; j++) {
+			newImg.at<uchar>(j, inity) = img.at<uchar>(j, inity);
 		}
-	}
-	else if (img.channels() == 3) {
-		for (int i=0; i<s.pixels.size(); i++) {
-			initx = s.pixels[i].x;	inity = s.pixels[i].y;
-			for (int j=0; j<initx; j++) {
-				newImg.at<Vec3b>(j, inity)[0] = img.at<Vec3b>(j, inity)[0];
-				newImg.at<Vec3b>(j, inity)[1] = img.at<Vec3b>(j, inity)[1];
-				newImg.at<Vec3b>(j, inity)[2] = img.at<Vec3b>(j, inity)[2];
-			}
-			for (int j=initx+1; j<img.cols; j++) {
-				newImg.at<Vec3b>(j-1, inity)[0] = img.at<Vec3b>(j, inity)[0];
-				newImg.at<Vec3b>(j-1, inity)[1] = img.at<Vec3b>(j, inity)[1];
-				newImg.at<Vec3b>(j-1, inity)[2] = img.at<Vec3b>(j, inity)[2];
-			}
+		for (int j=initx+1; j<img.cols; j++) {
+			newImg.at<uchar>(j-1, inity) = img.at<uchar>(j, inity);
 		}
 	}
 }
